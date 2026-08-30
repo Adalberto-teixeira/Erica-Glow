@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./fidelity.css";
 import "./interaction-fixes.css";
+import "./guest-booking.css";
 import { BottomNav } from "@/components/BottomNav";
 import { PwaRegister } from "@/components/PwaRegister";
 import { SiteHeader } from "@/components/SiteHeader";

@@ -1,0 +1,2 @@
+.guest-banner{display:flex;align-items:center;gap:12px;margin-top:18px;padding:13px 16px;border:1px solid #dfc794;background:#fff8e9;border-radius:14px;color:#59451f}.guest-banner svg{width:24px;color:#a66f13;flex:0 0 auto}.guest-banner div{display:grid;gap:3px}.guest-banner strong{font-size:12px}.guest-banner span{font-size:10px;line-height:1.45}
+@media(max-width:759px){.guest-banner{align-items:flex-start;margin-top:14px}}

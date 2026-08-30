@@ -1,10 +1,3 @@
-export default function Page() {
-  return (
-    <section className="page">
-      <p className="eyebrow">Erica Glow</p>
-      <h1>Mon profil</h1>
-      <p className="lead">Connexion, compte client et préférences seront ajoutés ici.</p>
-      <div className="empty-card">Module en préparation.</div>
-    </section>
-  );
-}
+import Link from "next/link";
+import { UserRoundCheck } from "lucide-react";
+export default function Page(){return <section className="page"><p className="eyebrow">Espace cliente</p><h1>Mon profil</h1><p className="lead">Le compte est facultatif.</p><div className="empty-card empty-state"><UserRoundCheck/><h2>Réserver sans compte</h2><p>Vous pouvez prendre rendez-vous comme invitée. Aucun mot de passe ni inscription n’est demandé.</p><Link className="primary-button" href="/reserver">Continuer sans compte</Link><small className="muted">La connexion sera proposée plus tard uniquement pour synchroniser les rendez-vous entre plusieurs appareils.</small></div></section>}
