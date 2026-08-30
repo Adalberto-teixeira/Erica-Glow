@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /slots/{slotId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['date','time','bookingId','createdAt'])
+        && request.resource.data.date is string && request.resource.data.time is string
+        && request.resource.data.bookingId is string;
+      allow update, delete: if false;
+    }
+    match /bookings/{bookingId} {
+      allow create: if request.resource.data.id == bookingId
+        && request.resource.data.contact is string
+        && request.resource.data.reviewToken is string
+        && request.resource.data.status == 'pending';
+      allow read, update, delete: if false;
+    }
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'published';
+      allow create, update, delete: if false;
+    }
+  }
+}
