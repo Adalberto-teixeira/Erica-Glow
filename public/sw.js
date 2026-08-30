@@ -1,4 +1,4 @@
-const CACHE = "erica-glow-v3";
+const CACHE = "erica-glow-v4";
 const FALLBACK = ["/", "/services", "/reserver", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FALLBACK)));self.skipWaiting()});
 self.addEventListener("activate",event=>{event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))),self.clients.claim()]))});
