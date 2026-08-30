@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./fidelity.css";
+import "./interaction-fixes.css";
 import { BottomNav } from "@/components/BottomNav";
 import { PwaRegister } from "@/components/PwaRegister";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = {
   title: "Erica Glow",
@@ -27,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="fr">
       <body>
         <PwaRegister />
-        <main className="app-shell">{children}</main>
+        <main className="app-shell"><SiteHeader />{children}</main>
         <BottomNav />
       </body>
     </html>

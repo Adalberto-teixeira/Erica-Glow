@@ -12,6 +12,9 @@ function BookingForm() {
   const [serviceId, setServiceId] = useState(initialService);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [step, setStep] = useState<"slot" | "details" | "done">("slot");
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
   const service = useMemo(() => services.find((s) => s.id === serviceId) ?? services[0], [serviceId]);
 
   return (
@@ -20,7 +23,8 @@ function BookingForm() {
       <h1>Prendre rendez-vous</h1>
       <p className="lead">Première version du parcours de réservation.</p>
 
-      <div className="form-card">
+      {step === "done" ? <div className="form-card booking-success" role="status"><h2>Demande enregistrée</h2><p>Votre rendez-vous apparaît maintenant dans « Mes RDV » sur cet appareil.</p><a className="primary-button full" href="/mes-rdv">Voir mes rendez-vous</a></div> : <div className="form-card">
+        {step === "slot" ? <>
         <label>
           Prestation
           <select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
@@ -54,10 +58,17 @@ function BookingForm() {
           </div>
         </div>
 
-        <button className="primary-button full" disabled={!date || !time}>
+        <button type="button" className="primary-button full" disabled={!date || !time} onClick={() => setStep("details")}>
           Continuer
         </button>
-      </div>
+        </> : <>
+          <div className="summary-line"><span>{service.name}</span><strong>{date} · {time}</strong></div>
+          <label>Votre nom<input autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom et prénom" /></label>
+          <label>E-mail ou téléphone<input autoComplete="email" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Pour vous recontacter" /></label>
+          <button type="button" className="primary-button full" disabled={!name.trim() || !contact.trim()} onClick={() => { const booking={id:Date.now(),service:service.name,date,time,name,contact,status:"En attente de confirmation"}; const current=JSON.parse(localStorage.getItem("erica-glow-bookings")||"[]"); localStorage.setItem("erica-glow-bookings",JSON.stringify([...current,booking])); setStep("done"); }}>Enregistrer ma demande</button>
+          <button type="button" className="text-button" onClick={() => setStep("slot")}>← Modifier la date</button>
+        </>}
+      </div>}
     </section>
   );
 }

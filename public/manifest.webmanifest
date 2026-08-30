@@ -2,10 +2,18 @@
   "name": "Erica Glow",
   "short_name": "Erica Glow",
   "description": "R\u00e9servation en ligne \u2014 Lash Technician",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F7F2EA",
   "theme_color": "#F7F2EA",
+  "orientation": "portrait-primary",
+  "categories": ["beauty", "lifestyle"],
+  "shortcuts": [
+    { "name": "Réserver", "url": "/reserver", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Services", "url": "/services", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",
