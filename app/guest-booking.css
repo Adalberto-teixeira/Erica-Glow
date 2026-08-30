@@ -2,3 +2,4 @@
 @media(max-width:759px){.guest-banner{align-items:flex-start;margin-top:14px}}
 .send-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.whatsapp-button,.email-button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-size:12px;font-weight:700}.whatsapp-button{background:#1f9d55;color:#fff}.email-button{border:1px solid var(--gold);color:#8a5e16}.whatsapp-button svg,.email-button svg{width:18px}.booking-success>.muted{font-size:10px;line-height:1.5}
 @media(max-width:520px){.send-actions{grid-template-columns:1fr}}
+.delivery-status{padding:11px 13px;border-radius:11px;font-size:11px}.delivery-status.sending{background:#f5efe3;color:#795c29}.delivery-status.sent{background:#e8f5e6;color:#326b2d}.delivery-status.error{background:#fff0ed;color:#9a3027}
