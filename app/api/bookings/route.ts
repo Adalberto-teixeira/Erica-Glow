@@ -11,7 +11,7 @@ export async function POST(request:Request){
     if(!/^\S+@\S+\.\S+$/.test(body.email))return NextResponse.json({error:"E-mail invalide"},{status:400});
     const password=process.env.SMTP_PASSWORD;
     if(!password)return NextResponse.json({error:"SMTP non configuré"},{status:503});
-    const host=process.env.SMTP_HOST||"smtp.erica-glow.fr";
+    const host=process.env.SMTP_HOST||"smtp.mail.ovh.net";
     const port=Number(process.env.SMTP_PORT||587);
     const user=process.env.SMTP_USER||"contact@erica-glow.fr";
     const transporter=nodemailer.createTransport({host,port,secure:false,requireTLS:true,auth:{user,pass:password}});
