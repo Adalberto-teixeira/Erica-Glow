@@ -1,23 +1,34 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'contact@erica-glow.fr';
+    }
     match /slots/{slotId} {
       allow read: if true;
       allow create: if request.resource.data.keys().hasOnly(['date','time','bookingId','createdAt'])
         && request.resource.data.date is string && request.resource.data.time is string
         && request.resource.data.bookingId is string;
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
     }
     match /bookings/{bookingId} {
       allow create: if request.resource.data.id == bookingId
         && request.resource.data.contact is string
         && request.resource.data.reviewToken is string
         && request.resource.data.status == 'pending';
-      allow read, update, delete: if false;
+      allow read, update, delete: if isAdmin();
     }
     match /reviews/{reviewId} {
       allow read: if resource.data.status == 'published';
-      allow create, update, delete: if false;
+      allow create: if reviewId == request.resource.data.bookingId
+        && request.resource.data.status == 'pending'
+        && request.resource.data.bookingId is string
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.text is string
+        && get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.status == 'completed'
+        && get(/databases/$(database)/documents/bookings/$(request.resource.data.bookingId)).data.reviewToken == request.resource.data.reviewToken;
+      allow update, delete: if isAdmin();
     }
   }
 }
