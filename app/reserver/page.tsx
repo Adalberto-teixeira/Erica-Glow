@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { services } from "@/lib/services";
 
 const slots = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00"];
 
-export default function BookingPage() {
+function BookingForm() {
   const params = useSearchParams();
   const initialService = params.get("service") ?? services[0].id;
   const [serviceId, setServiceId] = useState(initialService);
@@ -60,4 +60,8 @@ export default function BookingPage() {
       </div>
     </section>
   );
+}
+
+export default function BookingPage() {
+  return <Suspense fallback={<section className="page"><p>Chargement…</p></section>}><BookingForm /></Suspense>;
 }
