@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from "firebase/auth";
-import { collection, deleteDoc, doc, getDocs, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
 import { CalendarDays, CheckCircle2, Clock3, LogOut, ShieldCheck, Star, Trash2 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 
@@ -18,20 +18,28 @@ export default function Page() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
 
-  const load = async () => {
-    const [bookingSnapshot, reviewSnapshot] = await Promise.all([
-      getDocs(query(collection(db, "bookings"), orderBy("createdAt", "desc"))),
-      getDocs(collection(db, "reviews")),
-    ]);
-    setBookings(bookingSnapshot.docs.map(item => ({ ...item.data(), id: item.id } as Booking)));
-    setReviews(reviewSnapshot.docs.map(item => ({ ...item.data(), id: item.id } as Review)));
-  };
-
-  useEffect(() => onAuthStateChanged(auth, current => {
-    setUser(current);
-    setLoading(false);
-    if (current) load().catch(() => setError("Impossible de charger les réservations."));
-  }), []);
+  useEffect(() => {
+    let stopBookings = () => {};
+    let stopReviews = () => {};
+    const stopAuth = onAuthStateChanged(auth, current => {
+      stopBookings();
+      stopReviews();
+      setUser(current);
+      setLoading(false);
+      if (!current) return;
+      stopBookings = onSnapshot(
+        query(collection(db, "bookings"), orderBy("createdAt", "desc")),
+        snapshot => setBookings(snapshot.docs.map(item => ({ ...item.data(), id: item.id } as Booking))),
+        () => setError("Impossible de charger les réservations."),
+      );
+      stopReviews = onSnapshot(
+        collection(db, "reviews"),
+        snapshot => setReviews(snapshot.docs.map(item => ({ ...item.data(), id: item.id } as Review))),
+        () => setError("Impossible de charger les avis."),
+      );
+    });
+    return () => { stopAuth(); stopBookings(); stopReviews(); };
+  }, []);
 
   const login = async (event: FormEvent) => {
     event.preventDefault();
