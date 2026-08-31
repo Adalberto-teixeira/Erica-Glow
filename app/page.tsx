@@ -5,13 +5,197 @@ import { services } from "@/lib/services";
 import WorkGallery from "@/components/WorkGallery";
 import PwaInstallSection from "@/components/PwaInstallSection";
 import VerifiedReviews from "@/components/VerifiedReviews";
-const highlights=[{icon:Gem,title:"Expertise",text:"Savoir-faire professionnel"},{icon:Leaf,title:"Produits premium",text:"Qualité & sécurité garanties"},{icon:Heart,title:"Sur mesure",text:"Chaque regard est unique"},{icon:Sparkles,title:"Résultat durable",text:"Tenue parfaite et confortable"}];
-export default function Home(){const featured=[services[0],services[2],services[4],services[7]];return <>
-<section className="hero" id="accueil"><Image className="hero-image" src="/images/erica-glow-hero.png" alt="Portrait beauté mettant en valeur des cils élégants" fill priority sizes="100vw"/><div className="hero-overlay"/><div className="hero-copy"><h1>Révélez votre<br/><em>regard</em>, révélez<br/>votre <em>éclat.</em> <span>✦</span></h1><div className="flourish"><i/><b>♥</b><i/></div><p>Spécialiste en extensions de cils<br/>pour un regard naturel & sublimé.</p><div className="hero-actions"><a className="black-button" href="#services">Découvrir mes services <span>→</span></a><Link className="outline-button" href="/reserver">Prendre rendez-vous <CalendarDays size={16}/></Link></div></div></section>
-<section className="highlights">{highlights.map(({icon:Icon,title,text})=><article key={title}><Icon/><h3>{title}</h3><p>{text}</p></article>)}</section>
-<div className="story-services"><section className="about" id="apropos"><div className="line-art"><span>◠</span><Sparkles/></div><div><h2>À propos</h2><div className="flourish small"><i/><b>♥</b><i/></div><p>Passionnée par la beauté du regard, je mets tout mon savoir-faire au service de votre confiance.</p><p>Mon objectif : sublimer votre regard tout en respectant votre naturel.</p><a className="black-button" href="#contact">En savoir plus</a></div></section><section className="services" id="services"><div className="section-title"><div><h2>Mes services</h2><div className="flourish small"><i/><b>♥</b><i/></div></div><Link href="/services">Voir tous les tarifs <span>→</span></Link></div><div className="service-grid">{featured.map((s,i)=><article className="service-card" key={s.id}><div className={`lash-photo lash-${i+1}`}><Image src="/images/lash-styles.png" alt="" fill sizes="300px"/></div><div className="service-content"><h3>{s.name}</h3><p>{i===3?"Dépose douce et soin pour vos cils naturels.":"Résultat naturel et élégant pour un regard sublimé."}</p><strong>À partir de {s.price}€</strong></div></article>)}</div></section></div>
-<WorkGallery/>
-<PwaInstallSection/>
-<VerifiedReviews/>
-<section className="closing closing-simple"><div className="monogram"><Image src="/icons/icon-512.png" alt="Erica Glow" fill sizes="150px"/></div><div className="booking-cta"><h2>Prête à sublimer<br/><em>votre regard ?</em></h2><p>Prenez rendez-vous en quelques clics.</p><div className="contact-placeholder">Martigues, France<br/><span>contact@erica-glow.fr</span></div><Link className="black-button" href="/reserver">Réserver maintenant <CalendarDays size={15}/></Link></div></section>
-<footer id="contact"><div className="footer-brand"><div className="wordmark"><span>✦</span> Erica <em>Glow</em><small>LASH TECHNICIAN</small></div><p>Sublimer votre regard est ma passion, votre confiance ma priorité.</p></div><div><h3>Navigation</h3><a href="#accueil">Accueil</a><a href="#apropos">À propos</a><a href="#services">Services</a><a href="#galerie">Galerie</a><a href="#installer">Installer l’application</a></div><div><h3>Services</h3>{featured.map(s=><Link href={`/reserver?service=${s.id}`} key={s.id}>{s.name}</Link>)}</div><div><h3>Informations</h3><p>Martigues, France</p><a href="mailto:contact@erica-glow.fr">contact@erica-glow.fr</a></div><small className="copyright">© 2026 Erica Glow — Tous droits réservés.</small></footer></>}
+const highlights = [
+  { icon: Gem, title: "Expertise", text: "Savoir-faire professionnel" },
+  {
+    icon: Leaf,
+    title: "Produits premium",
+    text: "Qualité & sécurité garanties",
+  },
+  { icon: Heart, title: "Sur mesure", text: "Chaque regard est unique" },
+  {
+    icon: Sparkles,
+    title: "Résultat durable",
+    text: "Tenue parfaite et confortable",
+  },
+];
+export default function Home() {
+  const featured = [services[0], services[2], services[4], services[7]];
+  return (
+    <>
+      <section className="hero" id="accueil">
+        <Image
+          className="hero-image"
+          src="/images/erica-glow-hero.png"
+          alt="Portrait beauté mettant en valeur des cils élégants"
+          fill
+          priority
+          sizes="100vw"
+        />
+        <div className="hero-overlay" />
+        <div className="hero-copy">
+          <h1>
+            Révélez votre
+            <br />
+            <em>regard</em>, révélez
+            <br />
+            votre <em>éclat.</em> <span>✦</span>
+          </h1>
+          <div className="flourish">
+            <i />
+            <b>♥</b>
+            <i />
+          </div>
+          <p>
+            Spécialiste en extensions de cils
+            <br />
+            pour un regard naturel & sublimé.
+          </p>
+          <div className="hero-actions">
+            <a className="black-button" href="#services">
+              Découvrir mes services <span>→</span>
+            </a>
+            <Link className="outline-button" href="/reserver">
+              Prendre rendez-vous <CalendarDays size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+      <section className="highlights">
+        {highlights.map(({ icon: Icon, title, text }) => (
+          <article key={title}>
+            <Icon />
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </article>
+        ))}
+      </section>
+      <div className="story-services">
+        <section className="about" id="apropos">
+          <div className="line-art">
+            <span>◠</span>
+            <Sparkles />
+          </div>
+          <div>
+            <h2>À propos</h2>
+            <div className="flourish small">
+              <i />
+              <b>♥</b>
+              <i />
+            </div>
+            <p>
+              Passionnée par la beauté du regard, je mets tout mon savoir-faire
+              au service de votre confiance.
+            </p>
+            <p>
+              Mon objectif : sublimer votre regard tout en respectant votre
+              naturel.
+            </p>
+            <a className="black-button" href="#contact">
+              En savoir plus
+            </a>
+          </div>
+        </section>
+        <section className="services" id="services">
+          <div className="section-title">
+            <div>
+              <h2>Mes services</h2>
+              <div className="flourish small">
+                <i />
+                <b>♥</b>
+                <i />
+              </div>
+            </div>
+            <Link href="/services">
+              Voir tous les tarifs <span>→</span>
+            </Link>
+          </div>
+          <div className="service-grid">
+            {featured.map((s, i) => (
+              <article className="service-card" key={s.id}>
+                <div className={`lash-photo lash-${i + 1}`}>
+                  <Image
+                    src="/images/lash-styles.png"
+                    alt=""
+                    fill
+                    sizes="300px"
+                  />
+                </div>
+                <div className="service-content">
+                  <h3>{s.name}</h3>
+                  <p>
+                    {i === 3
+                      ? "Dépose douce et soin pour vos cils naturels."
+                      : "Résultat naturel et élégant pour un regard sublimé."}
+                  </p>
+                  <strong>À partir de {s.price}€</strong>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
+      <WorkGallery />
+      <PwaInstallSection />
+      <VerifiedReviews />
+      <section className="closing closing-simple">
+        <div className="brand-signature">
+          <Image
+            src="/images/erica-glow-logo-transparent.png"
+            alt="Erica Glow — Lash Technician"
+            fill
+            sizes="240px"
+          />
+        </div>
+        <div className="booking-cta">
+          <h2>
+            Prête à sublimer
+            <br />
+            <em>votre regard ?</em>
+          </h2>
+          <p>Prenez rendez-vous en quelques clics.</p>
+          <div className="contact-placeholder">
+            Martigues, France
+            <br />
+            <span>contact@erica-glow.fr</span>
+          </div>
+          <Link className="black-button" href="/reserver">
+            Réserver maintenant <CalendarDays size={15} />
+          </Link>
+        </div>
+      </section>
+      <footer id="contact">
+        <div className="footer-brand">
+          <Image className="footer-logo" src="/images/erica-glow-logo-transparent.png" alt="Erica Glow — Lash Technician" width={190} height={110}/>
+          <p>
+            Sublimer votre regard est ma passion, votre confiance ma priorité.
+          </p>
+        </div>
+        <div>
+          <h3>Navigation</h3>
+          <a href="#accueil">Accueil</a>
+          <a href="#apropos">À propos</a>
+          <a href="#services">Services</a>
+          <a href="#galerie">Galerie</a>
+          <a href="#installer">Installer l’application</a>
+        </div>
+        <div>
+          <h3>Services</h3>
+          {featured.map((s) => (
+            <Link href={`/reserver?service=${s.id}`} key={s.id}>
+              {s.name}
+            </Link>
+          ))}
+        </div>
+        <div>
+          <h3>Informations</h3>
+          <p>Martigues, France</p>
+          <a href="mailto:contact@erica-glow.fr">contact@erica-glow.fr</a>
+        </div>
+        <small className="copyright">
+          © 2026 Erica Glow — Tous droits réservés.
+        </small>
+      </footer>
+    </>
+  );
+}

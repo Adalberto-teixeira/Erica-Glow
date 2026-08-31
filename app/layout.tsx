@@ -4,6 +4,7 @@ import "./fidelity.css";
 import "./interaction-fixes.css";
 import "./guest-booking.css";
 import "./menu-fixes.css";
+import "./brand-refresh.css";
 import { BottomNav } from "@/components/BottomNav";
 import { PwaRegister } from "@/components/PwaRegister";
 import { SiteHeader } from "@/components/SiteHeader";
