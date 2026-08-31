@@ -19,7 +19,7 @@ export async function POST(request:Request){
     const details=`<p><strong>Référence :</strong> ${safe.reference}</p><p><strong>Prestation :</strong> ${safe.service}</p><p><strong>Date :</strong> ${safe.date} à ${safe.time}</p><p><strong>Durée :</strong> ${safe.duration} min</p><p><strong>Tarif :</strong> ${safe.price} €</p>${safe.notes?`<p><strong>Note :</strong> ${safe.notes}</p>`:""}`;
     await Promise.all([
       transporter.sendMail({from:`Erica Glow <${user}>`,to:"contact@erica-glow.fr",replyTo:body.email,subject:`Nouvelle demande ${body.reference} — ${body.name}`,html:`<h2>Nouvelle demande de réservation</h2><p><strong>Cliente :</strong> ${safe.name}</p><p><strong>E-mail :</strong> ${safe.email}</p>${details}`}),
-      transporter.sendMail({from:`Erica Glow <${user}>`,to:body.email,subject:`Votre demande de réservation ${body.reference}`,html:`<h2>Merci ${safe.name}</h2><p>Nous avons bien reçu votre demande. Erica Glow vous contactera pour confirmer le créneau.</p>${details}<p>À bientôt,<br><strong>Erica Glow</strong></p>`}),
+      transporter.sendMail({from:`Erica Glow <${user}>`,to:body.email,subject:`Votre rendez-vous est confirmé — ${body.reference}`,html:`<h2>Votre rendez-vous est confirmé</h2><p>Bonjour ${safe.name},</p><p>Le créneau sélectionné était disponible et votre réservation est confirmée automatiquement.</p>${details}<p>Erica Glow vous contactera uniquement si un changement exceptionnel est nécessaire.</p><p>À bientôt,<br><strong>Erica Glow</strong></p>`}),
     ]);
     return NextResponse.json({ok:true});
   }catch(error){console.error("Booking email error",error);return NextResponse.json({error:"Envoi impossible"},{status:500})}

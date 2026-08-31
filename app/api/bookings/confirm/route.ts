@@ -30,11 +30,14 @@ export async function POST(request: Request) {
     const user = process.env.SMTP_USER || "contact@erica-glow.fr";
     const transporter = nodemailer.createTransport({ host, port, secure: false, requireTLS: true, auth: { user, pass: password } });
     const safe = Object.fromEntries(Object.entries(body).map(([key, value]) => [key, escapeHtml(String(value ?? ""))]));
+    const reviewRequest = body.action === "review";
     await transporter.sendMail({
       from: `Erica Glow <${user}>`,
       to: body.email,
-      subject: `Votre rendez-vous est confirmé — ${body.reference}`,
-      html: `<h2>Votre rendez-vous est confirmé</h2><p>Bonjour ${safe.name},</p><p>Erica Glow confirme votre rendez-vous.</p><p><strong>Référence :</strong> ${safe.reference}</p><p><strong>Prestation :</strong> ${safe.service}</p><p><strong>Date :</strong> ${safe.date} à ${safe.time}</p><p><strong>Durée :</strong> ${safe.duration} min</p><p><strong>Tarif :</strong> ${safe.price} €</p><p>À bientôt,<br><strong>Erica Glow</strong></p>`,
+      subject: reviewRequest ? `Votre avis compte — ${body.reference}` : `Votre rendez-vous est confirmé — ${body.reference}`,
+      html: reviewRequest
+        ? `<h2>Merci pour votre confiance</h2><p>Bonjour ${safe.name},</p><p>Votre prestation <strong>${safe.service}</strong> est terminée. Partagez votre expérience en laissant un avis vérifié.</p><p><a href="https://erica-glow.fr/#avis" style="display:inline-block;padding:12px 20px;border-radius:24px;background:#111;color:#fff;text-decoration:none">Laisser mon avis</a></p><p>À bientôt,<br><strong>Erica Glow</strong></p>`
+        : `<h2>Votre rendez-vous est confirmé</h2><p>Bonjour ${safe.name},</p><p>Erica Glow confirme votre rendez-vous.</p><p><strong>Référence :</strong> ${safe.reference}</p><p><strong>Prestation :</strong> ${safe.service}</p><p><strong>Date :</strong> ${safe.date} à ${safe.time}</p><p><strong>Durée :</strong> ${safe.duration} min</p><p><strong>Tarif :</strong> ${safe.price} €</p><p>À bientôt,<br><strong>Erica Glow</strong></p>`,
     });
     return NextResponse.json({ ok: true });
   } catch (error) {

@@ -14,6 +14,6 @@ export async function createBooking(input:{id:string;service:string;serviceId:st
     const existing=await Promise.all(refs.map(ref=>transaction.get(ref)));
     if(existing.some(item=>item.exists())) throw new Error("SLOT_TAKEN");
     refs.forEach((ref,index)=>transaction.set(ref,{date:input.date,time:slots[index],bookingId:input.id,createdAt:serverTimestamp()}));
-    transaction.set(doc(db,"bookings",input.id),{...input,status:"pending",createdAt:serverTimestamp(),endsAt:new Date(`${input.date}T${input.time}:00`).getTime()+input.duration*60000});
+    transaction.set(doc(db,"bookings",input.id),{...input,status:"confirmed",createdAt:serverTimestamp(),endsAt:new Date(`${input.date}T${input.time}:00`).getTime()+input.duration*60000});
   });
 }

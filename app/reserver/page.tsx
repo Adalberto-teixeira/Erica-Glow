@@ -2,49 +2,485 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Check, ChevronLeft, Clock3, Mail, ShieldCheck, UserRoundCheck } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  Clock3,
+  Mail,
+  ShieldCheck,
+  UserRoundCheck,
+} from "lucide-react";
 import { services } from "@/lib/services";
 import { createBooking, getReservedTimes } from "@/lib/booking-store";
 
-const today=new Date().toISOString().split("T")[0];
-type Step="service"|"details"|"review"|"done";
-type Draft={id:string;service:string;serviceId:string;price:number;duration:number;date:string;time:string;name:string;contact:string;notes:string;status:string;createdAt:string;reviewToken?:string};
-const toMinutes=(time:string)=>{const [hours,minutes]=time.split(":").map(Number);return hours*60+minutes};
-const toTime=(minutes:number)=>`${String(Math.floor(minutes/60)).padStart(2,"0")}:${String(minutes%60).padStart(2,"0")}`;
+const today = new Date().toISOString().split("T")[0];
+type Step = "service" | "details" | "review" | "done";
+type Draft = {
+  id: string;
+  service: string;
+  serviceId: string;
+  price: number;
+  duration: number;
+  date: string;
+  time: string;
+  name: string;
+  contact: string;
+  notes: string;
+  status: string;
+  createdAt: string;
+  reviewToken?: string;
+};
+const toMinutes = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+const toTime = (minutes: number) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 
-function BookingForm(){
-  const params=useSearchParams();
-  const initial=params.get("service")??services[0].id;
-  const [step,setStep]=useState<Step>("service");
-  const [serviceId,setServiceId]=useState(initial);
-  const [date,setDate]=useState("");
-  const [time,setTime]=useState("");
-  const [name,setName]=useState("");
-  const [contact,setContact]=useState("");
-  const [deliveryStatus,setDeliveryStatus]=useState<"idle"|"sending"|"sent"|"error">("idle");
-  const [notes,setNotes]=useState("");
-  const [error,setError]=useState("");
-  const [reference,setReference]=useState("");
-  const [existingBookings,setExistingBookings]=useState<Draft[]>([]);
-  const [reservedTimes,setReservedTimes]=useState<Set<string>>(new Set());
-  const service=useMemo(()=>services.find(s=>s.id===serviceId)??services[0],[serviceId]);
-  useEffect(()=>{setExistingBookings(JSON.parse(localStorage.getItem("erica-glow-bookings")||"[]"))},[]);
-  useEffect(()=>{if(!date){setReservedTimes(new Set());return}getReservedTimes(date).then(setReservedTimes).catch(()=>setError("Impossible de charger les disponibilités. Réessayez."))},[date]);
-  const availableSlots=useMemo(()=>{if(!date)return[];const day=new Date(`${date}T12:00:00`).getDay();if(day===0)return[];const [opening,closing]=day===6?[10*60,17*60]:[18*60,22*60];const result:string[]=[];for(let start=opening;start+service.duration<=closing;start+=30){const remoteConflict=Array.from({length:Math.ceil(service.duration/30)},(_,i)=>toTime(start+i*30)).some(slot=>reservedTimes.has(slot));const localConflict=existingBookings.some(booking=>{if(booking.date!==date)return false;const bookedStart=toMinutes(booking.time);return start<bookedStart+(booking.duration||60)&&start+service.duration>bookedStart});if(!remoteConflict&&!localConflict)result.push(toTime(start))}return result},[date,service.duration,existingBookings,reservedTimes]);
-  const progress=step==="service"?1:step==="details"?2:3;
-  const chooseDate=(value:string)=>{setDate(value);setTime("");const day=new Date(`${value}T12:00:00`).getDay();setError(day===0?"Les réservations ne sont pas disponibles le dimanche.":"")};
-  const save=async()=>{if(!availableSlots.includes(time)){setError("Ce créneau vient d’être pris. Veuillez en choisir un autre.");setTime("");setStep("service");return}const ref=`EG-${Date.now().toString().slice(-6)}`;const reviewToken=crypto.randomUUID();const draft:Draft={id:ref,service:service.name,serviceId:service.id,price:service.price,duration:service.duration,date,time,name:name.trim(),contact:contact.trim(),notes:notes.trim(),status:"Demande à confirmer",createdAt:new Date().toISOString(),reviewToken};try{await createBooking({...draft,reviewToken});const current:Draft[]=JSON.parse(localStorage.getItem("erica-glow-bookings")||"[]");const next=[...current,draft];localStorage.setItem("erica-glow-bookings",JSON.stringify(next));setExistingBookings(next);setReference(ref);setDeliveryStatus("sending");setStep("done");const response=await fetch("/api/bookings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({reference:ref,name:name.trim(),email:contact.trim(),service:service.name,date,time,duration:service.duration,price:service.price,notes:notes.trim()})});setDeliveryStatus(response.ok?"sent":"error")}catch(cause){if(cause instanceof Error&&cause.message==="SLOT_TAKEN"){setError("Ce créneau vient d’être réservé. Choisissez une autre heure.");setTime("");setStep("service")}else setError("La réservation n’a pas pu être enregistrée. Réessayez.")}};
-  const confirmationText=encodeURIComponent(`Bonjour Erica Glow, je souhaite confirmer ma demande ${reference}.\n\nCliente : ${name}\nContact : ${contact}\nPrestation : ${service.name}\nDate : ${date}\nHeure : ${time}\nDurée : ${service.duration} min\nTarif : ${service.price} €${notes?`\nNote : ${notes}`:""}`);
-  const emailHref=`mailto:contact@erica-glow.fr?subject=${encodeURIComponent(`Demande de réservation ${reference}`)}&body=${confirmationText}`;
-  return <section className="page booking-page">
-    <div className="booking-heading"><div><p className="eyebrow">Réservation sans compte</p><h1>Prendre rendez-vous</h1><p className="lead">Aucun compte ni mot de passe n’est nécessaire.</p></div>{step!=="done"&&<div className="progress-wrap" aria-label={`Étape ${progress} sur 3`}><span>Étape {progress}/3</span><div className="progress-track"><i style={{width:`${progress/3*100}%`}}/></div></div>}</div>
-    {step!=="done"&&<div className="guest-banner"><UserRoundCheck/><div><strong>Vous continuez comme invitée</strong><span>Indiquez simplement votre adresse e-mail pour recevoir la confirmation.</span></div></div>}
-    {step==="done"?<div className="form-card booking-success" role="status"><span className="success-icon"><Check/></span><p className="eyebrow">Demande enregistrée</p><h2>Merci, {name.split(" ")[0]} !</h2><p>Votre demande <strong>{reference}</strong> a été enregistrée.</p>{deliveryStatus==="sending"&&<p className="delivery-status sending">Envoi des confirmations par e-mail…</p>}{deliveryStatus==="sent"&&<p className="delivery-status sent">Confirmation envoyée à votre e-mail et notification envoyée à Erica Glow.</p>}{deliveryStatus==="error"&&<p className="delivery-status error">L’envoi automatique n’est pas encore configuré. Utilisez le bouton e-mail ci-dessous.</p>}<div className="receipt"><span>{service.name}</span><strong>{date} · {time}</strong><span>{service.duration} min</span><strong>{service.price} €</strong></div><div className="send-actions"><a className="email-button" href={emailHref}><Mail/> Envoyer par e-mail</a></div><small className="muted">Ce bouton reste disponible comme solution de secours.</small><Link className="text-button" href="/mes-rdv">Suivre ma demande</Link><Link className="text-button" href="/">Retour à l’accueil</Link></div>:
-    <div className="booking-layout"><div className="form-card">
-      {step==="service"&&<><h2>Choisissez votre créneau</h2><div className="hours-note"><strong>Horaires</strong><span>Lun–Ven 18h–22h · Sam 10h–17h · Dim fermé</span></div><label>Prestation<select value={serviceId} onChange={e=>{setServiceId(e.target.value);setTime("")}}>{services.map(s=><option key={s.id} value={s.id}>{s.name} — {s.price} €</option>)}</select></label><div className="service-summary"><span><Clock3/> Durée</span><strong>{service.duration} min</strong><span>Tarif</span><strong>{service.price} €</strong></div><label>Date<input type="date" min={today} value={date} onChange={e=>chooseDate(e.target.value)}/></label>{error&&<p className="form-error" role="alert">{error}</p>}<div><span className="label">Heure disponible</span><div className="slot-grid">{availableSlots.map(slot=><button type="button" key={slot} onClick={()=>setTime(slot)} className={time===slot?"slot selected":"slot"}>{slot}</button>)}</div>{date&&!error&&availableSlots.length===0&&<p className="no-slots">Aucun créneau disponible pour cette prestation.</p>}</div><button type="button" className="primary-button full" disabled={!date||!time||!!error} onClick={()=>setStep("details")}>Continuer</button></>}
-      {step==="details"&&<><button className="back-button" type="button" onClick={()=>setStep("service")}><ChevronLeft/> Retour</button><h2>Vos coordonnées d’invitée</h2><p className="muted">Pas de création de compte. Votre e-mail recevra la confirmation.</p><label>Nom et prénom<input autoComplete="name" value={name} onChange={e=>setName(e.target.value)} placeholder="Nom et prénom"/></label><label>Adresse e-mail<input type="email" autoComplete="email" value={contact} onChange={e=>setContact(e.target.value)} placeholder="vous@exemple.fr"/></label><label>Note pour Erica Glow <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Facultatif : allergies, souhait particulier…" maxLength={300}/><small>{notes.length}/300</small></label><button type="button" className="primary-button full" disabled={name.trim().length<2||!/^\S+@\S+\.\S+$/.test(contact.trim())} onClick={()=>setStep("review")}>Vérifier ma demande</button></>}
-      {step==="review"&&<><button className="back-button" type="button" onClick={()=>setStep("details")}><ChevronLeft/> Retour</button><h2>Vérifiez votre demande</h2><div className="review-list"><div><span>Prestation</span><strong>{service.name}</strong></div><div><span>Date et heure</span><strong>{date} · {time}</strong></div><div><span>Durée</span><strong>{service.duration} min</strong></div><div><span>Tarif</span><strong>{service.price} €</strong></div><div><span>Cliente</span><strong>{name}</strong></div><div><span>E-mail</span><strong>{contact}</strong></div></div><div className="privacy-note"><ShieldCheck/><span>Une confirmation sera envoyée à cet e-mail et Erica Glow recevra la demande.</span></div><button type="button" className="primary-button full" onClick={save}>Envoyer ma demande</button></>}
-    </div><aside className="booking-aside"><p className="eyebrow">Votre sélection</p><h2>{service.name}</h2><div><span>Durée estimée</span><strong>{service.duration} min</strong></div><div><span>Prix</span><strong>{service.price} €</strong></div>{date&&<div><span>Créneau</span><strong>{date}{time&&` · ${time}`}</strong></div>}<p>La demande ne devient définitive qu’après confirmation.</p></aside></div>}
-  </section>
+function BookingForm() {
+  const params = useSearchParams();
+  const initial = params.get("service") ?? services[0].id;
+  const [step, setStep] = useState<Step>("service");
+  const [serviceId, setServiceId] = useState(initial);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState<
+    "idle" | "sending" | "sent" | "error"
+  >("idle");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
+  const [existingBookings, setExistingBookings] = useState<Draft[]>([]);
+  const [reservedTimes, setReservedTimes] = useState<Set<string>>(new Set());
+  const service = useMemo(
+    () => services.find((s) => s.id === serviceId) ?? services[0],
+    [serviceId],
+  );
+  useEffect(() => {
+    setExistingBookings(
+      JSON.parse(localStorage.getItem("erica-glow-bookings") || "[]"),
+    );
+  }, []);
+  useEffect(() => {
+    if (!date) {
+      setReservedTimes(new Set());
+      return;
+    }
+    getReservedTimes(date)
+      .then(setReservedTimes)
+      .catch(() =>
+        setError("Impossible de charger les disponibilités. Réessayez."),
+      );
+  }, [date]);
+  const availableSlots = useMemo(() => {
+    if (!date) return [];
+    const day = new Date(`${date}T12:00:00`).getDay();
+    const [opening, closing] =
+      day === 6
+        ? [9 * 60, 19 * 60]
+        : day === 0
+          ? [10 * 60, 19 * 60]
+          : [18 * 60, 22 * 60];
+    const result: string[] = [];
+    for (
+      let start = opening;
+      start + service.duration <= closing;
+      start += 30
+    ) {
+      const remoteConflict = Array.from(
+        { length: Math.ceil(service.duration / 30) },
+        (_, i) => toTime(start + i * 30),
+      ).some((slot) => reservedTimes.has(slot));
+      const localConflict = existingBookings.some((booking) => {
+        if (booking.date !== date) return false;
+        const bookedStart = toMinutes(booking.time);
+        return (
+          start < bookedStart + (booking.duration || 60) &&
+          start + service.duration > bookedStart
+        );
+      });
+      if (!remoteConflict && !localConflict) result.push(toTime(start));
+    }
+    return result;
+  }, [date, service.duration, existingBookings, reservedTimes]);
+  const progress = step === "service" ? 1 : step === "details" ? 2 : 3;
+  const chooseDate = (value: string) => {
+    setDate(value);
+    setTime("");
+    setError("");
+  };
+  const save = async () => {
+    if (!availableSlots.includes(time)) {
+      setError("Ce créneau vient d’être pris. Veuillez en choisir un autre.");
+      setTime("");
+      setStep("service");
+      return;
+    }
+    const ref = `EG-${Date.now().toString().slice(-6)}`;
+    const reviewToken = crypto.randomUUID();
+    const draft: Draft = {
+      id: ref,
+      service: service.name,
+      serviceId: service.id,
+      price: service.price,
+      duration: service.duration,
+      date,
+      time,
+      name: name.trim(),
+      contact: contact.trim(),
+      notes: notes.trim(),
+      status: "Confirmé",
+      createdAt: new Date().toISOString(),
+      reviewToken,
+    };
+    try {
+      await createBooking({ ...draft, reviewToken });
+      const current: Draft[] = JSON.parse(
+        localStorage.getItem("erica-glow-bookings") || "[]",
+      );
+      const next = [...current, draft];
+      localStorage.setItem("erica-glow-bookings", JSON.stringify(next));
+      setExistingBookings(next);
+      setReference(ref);
+      setDeliveryStatus("sending");
+      setStep("done");
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reference: ref,
+          name: name.trim(),
+          email: contact.trim(),
+          service: service.name,
+          date,
+          time,
+          duration: service.duration,
+          price: service.price,
+          notes: notes.trim(),
+        }),
+      });
+      setDeliveryStatus(response.ok ? "sent" : "error");
+    } catch (cause) {
+      if (cause instanceof Error && cause.message === "SLOT_TAKEN") {
+        setError(
+          "Ce créneau vient d’être réservé. Choisissez une autre heure.",
+        );
+        setTime("");
+        setStep("service");
+      } else setError("La réservation n’a pas pu être enregistrée. Réessayez.");
+    }
+  };
+  const confirmationText = encodeURIComponent(
+    `Bonjour Erica Glow, je souhaite confirmer ma demande ${reference}.\n\nCliente : ${name}\nContact : ${contact}\nPrestation : ${service.name}\nDate : ${date}\nHeure : ${time}\nDurée : ${service.duration} min\nTarif : ${service.price} €${notes ? `\nNote : ${notes}` : ""}`,
+  );
+  const emailHref = `mailto:contact@erica-glow.fr?subject=${encodeURIComponent(`Demande de réservation ${reference}`)}&body=${confirmationText}`;
+  return (
+    <section className="page booking-page">
+      <div className="booking-heading">
+        <div>
+          <p className="eyebrow">Réservation sans compte</p>
+          <h1>Prendre rendez-vous</h1>
+          <p className="lead">Aucun compte ni mot de passe n’est nécessaire.</p>
+        </div>
+        {step !== "done" && (
+          <div className="progress-wrap" aria-label={`Étape ${progress} sur 3`}>
+            <span>Étape {progress}/3</span>
+            <div className="progress-track">
+              <i style={{ width: `${(progress / 3) * 100}%` }} />
+            </div>
+          </div>
+        )}
+      </div>
+      {step !== "done" && (
+        <div className="guest-banner">
+          <UserRoundCheck />
+          <div>
+            <strong>Vous continuez comme invitée</strong>
+            <span>
+              Indiquez simplement votre adresse e-mail pour recevoir la
+              confirmation.
+            </span>
+          </div>
+        </div>
+      )}
+      {step === "done" ? (
+        <div className="form-card booking-success" role="status">
+          <span className="success-icon">
+            <Check />
+          </span>
+          <p className="eyebrow">Rendez-vous confirmé</p>
+          <h2>Merci, {name.split(" ")[0]} !</h2>
+          <p>
+            Votre rendez-vous <strong>{reference}</strong> est confirmé.
+          </p>
+          {deliveryStatus === "sending" && (
+            <p className="delivery-status sending">
+              Envoi des confirmations par e-mail…
+            </p>
+          )}
+          {deliveryStatus === "sent" && (
+            <p className="delivery-status sent">
+              Confirmation envoyée à votre e-mail et notification envoyée à
+              Erica Glow.
+            </p>
+          )}
+          {deliveryStatus === "error" && (
+            <p className="delivery-status error">
+              L’envoi automatique n’est pas encore configuré. Utilisez le bouton
+              e-mail ci-dessous.
+            </p>
+          )}
+          <div className="receipt">
+            <span>{service.name}</span>
+            <strong>
+              {date} · {time}
+            </strong>
+            <span>{service.duration} min</span>
+            <strong>{service.price} €</strong>
+          </div>
+          <div className="send-actions">
+            <a className="email-button" href={emailHref}>
+              <Mail /> Envoyer par e-mail
+            </a>
+          </div>
+          <small className="muted">
+            Ce bouton reste disponible comme solution de secours.
+          </small>
+          <Link className="text-button" href="/mes-rdv">
+            Suivre ma demande
+          </Link>
+          <Link className="text-button" href="/">
+            Retour à l’accueil
+          </Link>
+        </div>
+      ) : (
+        <div className="booking-layout">
+          <div className="form-card">
+            {step === "service" && (
+              <>
+                <h2>Choisissez votre créneau</h2>
+                <div className="hours-note">
+                  <strong>Horaires</strong>
+                  <span>Lun–Ven 18h–22h · Sam 9h–19h · Dim 10h–19h</span>
+                </div>
+                <label>
+                  Prestation
+                  <select
+                    value={serviceId}
+                    onChange={(e) => {
+                      setServiceId(e.target.value);
+                      setTime("");
+                    }}
+                  >
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} — {s.price} €
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="service-summary">
+                  <span>
+                    <Clock3 /> Durée
+                  </span>
+                  <strong>{service.duration} min</strong>
+                  <span>Tarif</span>
+                  <strong>{service.price} €</strong>
+                </div>
+                <label>
+                  Date
+                  <input
+                    type="date"
+                    min={today}
+                    value={date}
+                    onChange={(e) => chooseDate(e.target.value)}
+                  />
+                </label>
+                {error && (
+                  <p className="form-error" role="alert">
+                    {error}
+                  </p>
+                )}
+                <div>
+                  <span className="label">Heure disponible</span>
+                  <div className="slot-grid">
+                    {availableSlots.map((slot) => (
+                      <button
+                        type="button"
+                        key={slot}
+                        onClick={() => setTime(slot)}
+                        className={time === slot ? "slot selected" : "slot"}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                  {date && !error && availableSlots.length === 0 && (
+                    <p className="no-slots">
+                      Aucun créneau disponible pour cette prestation.
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="primary-button full"
+                  disabled={!date || !time || !!error}
+                  onClick={() => setStep("details")}
+                >
+                  Continuer
+                </button>
+              </>
+            )}
+            {step === "details" && (
+              <>
+                <button
+                  className="back-button"
+                  type="button"
+                  onClick={() => setStep("service")}
+                >
+                  <ChevronLeft /> Retour
+                </button>
+                <h2>Vos coordonnées d’invitée</h2>
+                <p className="muted">
+                  Pas de création de compte. Votre e-mail recevra la
+                  confirmation.
+                </p>
+                <label>
+                  Nom et prénom
+                  <input
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nom et prénom"
+                  />
+                </label>
+                <label>
+                  Adresse e-mail
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                    placeholder="vous@exemple.fr"
+                  />
+                </label>
+                <label>
+                  Note pour Erica Glow{" "}
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Facultatif : allergies, souhait particulier…"
+                    maxLength={300}
+                  />
+                  <small>{notes.length}/300</small>
+                </label>
+                <button
+                  type="button"
+                  className="primary-button full"
+                  disabled={
+                    name.trim().length < 2 ||
+                    !/^\S+@\S+\.\S+$/.test(contact.trim())
+                  }
+                  onClick={() => setStep("review")}
+                >
+                  Vérifier ma demande
+                </button>
+              </>
+            )}
+            {step === "review" && (
+              <>
+                <button
+                  className="back-button"
+                  type="button"
+                  onClick={() => setStep("details")}
+                >
+                  <ChevronLeft /> Retour
+                </button>
+                <h2>Vérifiez votre demande</h2>
+                <div className="review-list">
+                  <div>
+                    <span>Prestation</span>
+                    <strong>{service.name}</strong>
+                  </div>
+                  <div>
+                    <span>Date et heure</span>
+                    <strong>
+                      {date} · {time}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Durée</span>
+                    <strong>{service.duration} min</strong>
+                  </div>
+                  <div>
+                    <span>Tarif</span>
+                    <strong>{service.price} €</strong>
+                  </div>
+                  <div>
+                    <span>Cliente</span>
+                    <strong>{name}</strong>
+                  </div>
+                  <div>
+                    <span>E-mail</span>
+                    <strong>{contact}</strong>
+                  </div>
+                </div>
+                <div className="privacy-note">
+                  <ShieldCheck />
+                  <span>
+                    Une confirmation sera envoyée à cet e-mail et Erica Glow
+                    recevra la demande.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="primary-button full"
+                  onClick={save}
+                >
+                  Envoyer ma demande
+                </button>
+              </>
+            )}
+          </div>
+          <aside className="booking-aside">
+            <p className="eyebrow">Votre sélection</p>
+            <h2>{service.name}</h2>
+            <div>
+              <span>Durée estimée</span>
+              <strong>{service.duration} min</strong>
+            </div>
+            <div>
+              <span>Prix</span>
+              <strong>{service.price} €</strong>
+            </div>
+            {date && (
+              <div>
+                <span>Créneau</span>
+                <strong>
+                  {date}
+                  {time && ` · ${time}`}
+                </strong>
+              </div>
+            )}
+            <p>Si le créneau est libre, le rendez-vous est confirmé immédiatement.</p>
+          </aside>
+        </div>
+      )}
+    </section>
+  );
 }
-export default function BookingPage(){return <Suspense fallback={<section className="page"><p>Chargement…</p></section>}><BookingForm/></Suspense>}
+export default function BookingPage() {
+  return (
+    <Suspense
+      fallback={
+        <section className="page">
+          <p>Chargement…</p>
+        </section>
+      }
+    >
+      <BookingForm />
+    </Suspense>
+  );
+}
